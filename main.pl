@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sh -c "exec swipl -q -g main -t halt \$0 -- \$@"
+#!/usr/bin/env -S sh -c "exec swipl -q -g main -t halt \$0 -- \"\$@\""
 
 :- set_prolog_flag(autoload, false).
 :- use_module(library(main)).
@@ -14,8 +14,25 @@ process_args([]) :-
     print_usage,
     halt(1).
 
-process_args(['-s', Port]) :- start_server(Port).
-process_args(['-c', Host, Port]) :- start_client(Host, Port).
+process_args(['-s', Port]) :- !,
+    (
+        atom_number(Port, PortNum)
+        ;
+            write("Failed to parse number: "), write(Port), nl,
+            print_usage,
+            halt(1)
+    ), !,
+    start_server(PortNum).
+
+process_args(['-c', Host, Port]) :- !,
+    (
+        atom_number(Port, PortNum)
+        ;
+            write("Failed to parse number: "), write(Port), nl,
+            print_usage,
+            halt(1)
+    ), !,
+    start_client(Host, PortNum).
 
 process_args(Args) :-
     write("Invalid arguments provided:"), nl,
