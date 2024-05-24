@@ -1,4 +1,4 @@
-#!/usr/bin/env -S swipl -q -t main
+#!/usr/bin/env -S swipl -q -g main -t halt
 
 print_args([]).
 print_args([Arg | T]) :-
