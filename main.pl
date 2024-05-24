@@ -2,7 +2,7 @@
 
 :- set_prolog_flag(autoload, false).
 :- use_module(library(main)).
-:- include('piskvorky.pl').
+:- include('game_loop.pl').
 
 print_usage :-
     write("Usage:"), nl,
