@@ -46,4 +46,5 @@ print_args([Arg|Args]) :-
     write("Arg: "), write(Arg), nl,
     print_args(Args).
 
+main(['-d' | Args]) :- use_module(library(edinburgh)), debug, process_args(Args).
 main(Args) :- process_args(Args).
