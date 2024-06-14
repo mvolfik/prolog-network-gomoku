@@ -45,7 +45,9 @@ plays_first(x, false).
 plays_first(o, true).
 
 game_loop(StreamPair, Player) :-
-    write("You are playing with "), writetile(Player), nl,
+    write("+----------------------+"), nl,
+    write("|You are playing with "), writetile(Player), write("|"), nl,
+    write("+----------------------+"), nl,
     plays_first(Player, Plays),
     game_loop_inner(StreamPair, Player, [[x]], Plays).
 
