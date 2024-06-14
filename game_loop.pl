@@ -3,7 +3,7 @@
 :- include('piskvorky.pl').
 
 cleanup(StreamPair) :-
-    write("Cleaning up"), nl,
+    % write("Cleaning up"), nl,
     close(StreamPair).
 
 shared_setup :-
@@ -47,8 +47,7 @@ plays_first(o, true).
 game_loop(StreamPair, Player) :-
     write("You are playing with "), writetile(Player), nl,
     plays_first(Player, Plays),
-    game_loop_inner(StreamPair, Player, [[x]], Plays),
-    write("end of game loop"), nl.
+    game_loop_inner(StreamPair, Player, [[x]], Plays).
 
 game_loop_inner(StreamPair, Player, BoardState, false) :-
     opposite(Player, Opponent),
@@ -60,14 +59,14 @@ game_loop_inner(StreamPair, Player, BoardState, false) :-
 
 game_loop_inner(StreamPair, Player, BoardState, true) :-
     expand_board_state(BoardState, ExpandedBoardState),
-    print_board(ExpandedBoardState, MaxX, MaxY),
+    nl, print_board(ExpandedBoardState, MaxX, MaxY),
     get_move(ExpandedBoardState, MaxX, MaxY, Player, X, Y, UpdatedBoard),
     trim_board_state(UpdatedBoard, X, Y, NewBoardState),
     A is X // 256, B is X mod 256, C is Y // 256, D is Y mod 256,
     string_codes(Msg, [A,B,C,D]),
     write(StreamPair, Msg),
     flush_output(StreamPair),
-    game_loop_inner(StreamPair, Player, NewBoardState, false).
+    check_win_and_loop(StreamPair, Player, NewBoardState, false).
 
 process_message(_, _, _, []).
 process_message(StreamPair, Player, BoardState, [255,255,255,255]) :-
@@ -85,9 +84,19 @@ process_message(StreamPair, Player, BoardState, [A,B,C,D]) :-
     set_board_tile(ExpandedBoardState, X, Y, Opponent, OldValue, UpdatedBoard),
     (OldValue = e -> true ; write("Is the other player cheating, or is this implementation broken? Opponent moved on a non-empty tile"), nl),
     trim_board_state(UpdatedBoard, X, Y, NewBoardState),
-    game_loop_inner(StreamPair, Player, NewBoardState, true).
+    check_win_and_loop(StreamPair, Player, NewBoardState, true).
 
 process_message(_, _, L) :-
     write("Received "),
     length(L, Len), write(Len),
     write(" orphan bytes, connection maybe got corrupted?"), nl.
+
+check_win_and_loop(StreamPair, Player, NewBoardState, IsMyTurn) :-
+    (
+        check_win(NewBoardState, Winner)
+    ->
+        nl, nl, print_board(NewBoardState, _, _),
+        write("Player "), writetile(Winner), write(" wins!"), nl
+    ;
+        game_loop_inner(StreamPair, Player, NewBoardState, IsMyTurn)
+    ).

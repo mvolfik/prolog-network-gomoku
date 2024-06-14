@@ -19,9 +19,9 @@ process_args(['-s', Port]) :- !,
     (
         atom_number(Port, PortNum)
         ;
-            write("Failed to parse number: "), write(Port), nl,
-            print_usage,
-            halt(1)
+        write("Failed to parse number: "), write(Port), nl,
+        print_usage,
+        halt(1)
     ), !,
     start_server(PortNum).
 
@@ -29,9 +29,9 @@ process_args(['-c', Host, Port]) :- !,
     (
         atom_number(Port, PortNum)
         ;
-            write("Failed to parse number: "), write(Port), nl,
-            print_usage,
-            halt(1)
+        write("Failed to parse number: "), write(Port), nl,
+        print_usage,
+        halt(1)
     ), !,
     start_client(Host, PortNum).
 
