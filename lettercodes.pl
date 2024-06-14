@@ -1,7 +1,7 @@
 :- use_module(library(arithmetic), [ arithmetic_function/1 ]).
 
 % define alphabet_size as an arithmetic "constant"
-alphabet_size(X) :- X is 3.
+alphabet_size(X) :- X is 26.
 :- arithmetic_function(alphabet_size/0).
 
 lettercodes_number(``, _) :- !, false.
