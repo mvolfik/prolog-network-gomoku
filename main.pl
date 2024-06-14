@@ -1,6 +1,7 @@
-#!/usr/bin/env -S sh -c "exec swipl -q -g main -t halt \$0 -- \"\$@\""
+#!/usr/bin/env -S sh -c "exec swipl -g main -t halt \$0 -- \"\$@\""
 
-:- set_prolog_flag(autoload, false).
+:- set_prolog_flag(autoload, explicit).
+
 :- use_module(library(main)).
 :- include('game_loop.pl').
 

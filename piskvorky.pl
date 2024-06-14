@@ -1,72 +1,163 @@
-print_board(BoardState, MaxX, MaxY) :-
-    write("dummy board print"), nl,
-    MaxX = 10,
-    MaxY = 5.
+:- use_module(library(lists), [ append/3 ]).
+:- use_module(library(apply), [ maplist/3 ]).
+:- include('lettercodes.pl').
 
-get_coords(X, Y, MaxX, MaxY) :-
-    read_line_to_string(user_input, Line),
-    split_string(Line, " ", "", Input),
-    get_coords_parse(X, Y, MaxX, MaxY, Input).
+expand_board_state(BoardState, Expanded) :-
+    BoardState = [Row1|_],
+    length(Row1, BoardWidth),
+    nempty(BoardWidth, EmptyRow),
+    append([EmptyRow | BoardState], [EmptyRow], HeightExpanded),
+    maplist(expand_row, HeightExpanded, Expanded).
 
+expand_row(Row, Expanded) :- append([e|Row], [e], Expanded).
 
-get_coords_parse(X, Y, MaxX, MaxY, [A, B]) :-
+popleft([_|T], T).
+popright(L, R) :- append(R, [_], L).
+
+trim_board_state(BoardState, ChosenX, ChosenY, Trimmed) :-
+    BoardState = [Row1|_],
+    length(Row1, MaxX),
+    length(BoardState, MaxY),
+
     (
-        atom_codes(A, ACodes),
-        number_from_letters(ACodes, ANum),
-        ANum >= 0,
-        ANum =< MaxX,
-        (
-            atom_number(B, BNum),
-            BNum >= 0,
-            BNum =< MaxY,
-            X = ANum,
-            Y = BNum,
-            write("Got coords: "), write(X), write(", "), write(Y), nl
-        ;
-            write("The second value must be a number 0 to "), write(MaxY), nl,
-            write(": "),
-            get_coords(X, Y, MaxX, MaxY)
-        )
-    ;
-        write("The first value must be a letter A to "), write(MaxX), nl,
-        write(": "),
-        get_coords(X, Y, MaxX, MaxY)
-    ); throw(bug).
-
-get_coords_parse(X, Y, MaxX, MaxY, _) :-
-    write("Please enter two values separated by a space"), nl,
-    write(": "),
-    get_coords(X, Y, MaxX, MaxY).
-
-
-number_from_letters([], Number) :- !, false.
-number_from_letters(Letters, Number) :- number_from_letters_(Letters, 0, N), Number is N - 1.
-
-number_from_letters_([], N, N).
-number_from_letters_([Letter|Letters], Nin, Nout) :-
-    number_from_letter(Letter, Value),
-    Nnext is Nin * 26 + Value,
-    number_from_letters_(Letters, Nnext, Nout).
-
-number_from_letter(LetterCode, Number) :-
-    LetterCode >= 65, LetterCode =< 90, !, Number is LetterCode - 65 + 1
-    ;
-    LetterCode >= 97, LetterCode =< 122, !, Number is LetterCode - 97 + 1.
-
-letters_from_number(Number, Letters) :- Number >= 0, Nx is Number + 1, letters_from_number_(Nx, [], Letters).
-
-letters_from_number_(0, L, L) :- !.
-letters_from_number_(N, Acc, Out) :-
-    (
-        N =< 26
+        ChosenX = 0
     ->
-        letter_from_number(N, Letter),
-        Out = [Letter|Acc]
+        B1 = BoardState
     ;
-        N1 is (N - 1) // 26,
-        letter_from_number(N, Letter),
-        letters_from_number_(N1, [Letter|Acc], Out)
+        maplist(popleft, BoardState, B1)
+    ),
+    (
+        ChosenY = 0
+    ->
+        B2 = B1
+    ;
+        popleft(B1, B2)
+    ),
+    (
+        ChosenX is MaxX - 1
+    ->
+        B3 = B2
+    ;
+        maplist(popright, B2, B3)
+    ),
+    (
+        ChosenY is MaxY - 1
+    ->
+        Trimmed = B3
+    ;
+        popright(B3, Trimmed)
     ).
 
-letter_from_number(Number, Letter) :-
-    Letter is (Number - 1) mod 26 + 65.
+
+nempty(0, []) :- !.
+nempty(N, [e|T]) :- N1 is N - 1, nempty(N1, T).
+
+print_board(BoardState, MaxX, MaxY) :-
+    BoardState = [Row1|_],
+    length(BoardState, RowCount), MaxY is RowCount - 1,
+    length(Row1, ColCount), MaxX is ColCount - 1,
+
+    number_lettercodes(MaxX, MaxXCodes), length(MaxXCodes, ColWidth),
+    number_codes(MaxY, MaxYCodes), length(MaxYCodes, CoordColWidth),
+
+    print_board_header(MaxX, CoordColWidth, ColWidth),
+    print_board_rows(BoardState, 0, CoordColWidth, ColWidth),
+    print_board_header(MaxX, CoordColWidth, ColWidth).
+
+print_board_header(MaxX, CoordColWidth, ColWidth) :-
+    writensp(CoordColWidth),
+    MaxXNoninclusive is MaxX + 1,
+    print_board_header_columns(0, MaxXNoninclusive, ColWidth), nl.
+
+print_board_header_columns(X, X, _) :- !.
+print_board_header_columns(I, MaxX, ColWidth) :-
+    write(" "),
+    number_lettercodes(I, ColCodes),
+    length(ColCodes, W),
+    LeftPad is (ColWidth - W) // 2,
+    RightPad is ColWidth - W - LeftPad,
+    writensp(LeftPad),
+    writec(ColCodes),
+    writensp(RightPad),
+    I1 is I + 1,
+    print_board_header_columns(I1, MaxX, ColWidth).
+
+print_board_rows([], _, _, _) :- !.
+print_board_rows([Row|Rows], I, CoordColWidth, ColWidth) :-
+    number_codes(I, RowCode),
+    length(RowCode, W),
+    LeftPad is CoordColWidth - W,
+    writensp(LeftPad),
+    writec(RowCode),
+    ColPadLeft is (ColWidth - 1) // 2,
+    ColPadRight is ColWidth - 1 - ColPadLeft,
+    print_board_columns(Row, ColPadLeft, ColPadRight),
+    write(" "),
+    writec(RowCode),
+    nl,
+    I1 is I + 1,
+    print_board_rows(Rows, I1, CoordColWidth, ColWidth).
+
+writetile(e) :- write(" ").
+writetile(x) :- write("X").
+writetile(o) :- write("O").
+
+opposite(x, o).
+opposite(o, x).
+
+print_board_columns([], _, _) :- !.
+print_board_columns([Col|Cols], ColPadLeft, ColPadRight) :-
+    write(" "),
+    writensp(ColPadLeft),
+    writetile(Col),
+    writensp(ColPadRight),
+    print_board_columns(Cols, ColPadLeft, ColPadRight).
+
+% +Board, +X, +Y, +NewValue, -OldValue, -NewBoard
+set_board_tile([Row | OldTail], X, 0, Value, OldValue, [NewRow | OldTail]) :- !,
+    set_row_tile(Row, X, Value, OldValue, NewRow).
+
+set_board_tile([Row | OldTail], X, Y, Value, OldValue, [Row | NewTail]) :-
+    Y1 is Y - 1,
+    set_board_tile(OldTail, X, Y1, Value, OldValue, NewTail).
+
+set_row_tile([OldValue | OldTail], 0, Value, OldValue, [Value | OldTail]) :- !.
+set_row_tile([A | OldTail], X, Value, OldValue, [A | NewTail]) :-
+    X1 is X - 1,
+    set_row_tile(OldTail, X1, Value, OldValue, NewTail).
+
+get_move(ExpandedBoardState, MaxX, MaxY, Mark, Xout, Yout, UpdatedBoard) :-
+    write("Choose your move: "),
+    read_line_to_codes(user_input, Line),
+    string_codes(Line, LineCodes),
+    (
+        parse_coord(LineCodes, LetterCodes, Y),
+        lettercodes_number(LetterCodes, X),
+        X >= 0,
+        Y >= 0,
+        X =< MaxX,
+        Y =< MaxY
+    ->
+        (
+            set_board_tile(ExpandedBoardState, X, Y, Mark, e, UpdatedBoard)
+        ->
+            Xout = X,
+            Yout = Y
+        ;
+            write("This tile is already occupied"), nl,
+            get_move(ExpandedBoardState, MaxX, MaxY, Mark, Xout, Yout, UpdatedBoard)
+        )
+    ;
+        write("Please enter valid coordinates like 'B2'"), nl,
+        get_move(ExpandedBoardState, MaxX, MaxY, Mark, Xout, Yout, UpdatedBoard)
+    ).
+
+% +codes, -lettercodes, -number
+parse_coord([H|T1], [H|T2], N) :- (H >= 65, H =< 90; H >= 97, H =< 122), !, parse_coord(T1, T2, N).
+parse_coord([H|T], [], N) :- H >= 48, H =< 57, !, number_codes(N, [H|T]).
+
+writensp(N) :- nspaces_(L, N), string_codes(Str, L), write(Str).
+nspaces_([], X) :- X =< 0, !.
+nspaces_([32|T], N) :- N1 is N - 1, nspaces_(T, N1).
+
+writec(X) :- string_codes(S, X), write(S).
