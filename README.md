@@ -32,3 +32,7 @@ Respond with the coordinates of your move, e.g. `A1` to place your stone to the 
 After I figured out how to use the swipl socket library, the network code was relatively straightforward: see the predicates `start_server` and `start_client` in `game_loop.pl`. The high-level game logic of taking turns is also in that file. In `piskvorky.pl`, there are groups of predicates for three main purposes: detecting if either player has won, printing the game board and getting the user input (choosing the next move). Finally, `main.pl` is an executable file with a shebang comment that starts the prolog environment with the `main` goal, which receives the command-line arguments and starts server or client accordingly.
 
 Additionally, there is `test.pl` which contains small unit tests for some utility predicates (especially converting between numbers and the `A-Z,AA-AZ,BA-BZ,...` coordinate system).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
