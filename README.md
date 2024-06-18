@@ -8,8 +8,8 @@
 2. Clone this repository
 3. Run `./main.pl -s <port>` to start a "server" (player 1)
 4. Clone this repository on another machine (or just open a new terminal on the same PC)
-5. Run `./main.pl -c <host> <port>` to connect to the server (player 2). This creates a connection between the peers and starts the game for both players. The server stops listening for new connections.
-6. Play the game.
+5. Run `./main.pl -c <host> <port>` to connect to the server (player 2). Host can be IP address or a domain name. This creates a connection between the peers and starts the game for both players. The server stops listening for new connections.
+6. Play the game. The server plays first, automatically placing an `X` in the center of the board, therefore the first "real" turn is taken by the second client, who plays with `O`.
 7. The program exits when either player wins or disconnects.
 
 When it's your turn, the game will always prompt you like this:
