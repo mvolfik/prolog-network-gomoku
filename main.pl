@@ -35,6 +35,7 @@ process_args(['-c', Host, Port]) :- !,
     ), !,
     start_client(Host, PortNum).
 
+% if neither the server nor the client command structure matches
 process_args(Args) :-
     write("Invalid arguments provided:"), nl,
     print_args(Args),
@@ -47,4 +48,11 @@ print_args([Arg|Args]) :-
     write("Arg: "), write(Arg), nl,
     print_args(Args).
 
-main(Args) :- process_args(Args).
+% setup a signal handler, so that the program nicely exists on Ctrl+C
+setup_sigint_handler :-
+    % the signal handler doesn't work on Prolog 8.4.2
+    on_signal(int, _, throw).
+
+% the goal main/1 is called by main/0 (which we start in shebang at the top)
+% with the command line arguments used for starting the script
+main(Args) :- setup_sigint_handler, process_args(Args).
